@@ -37,6 +37,9 @@ const GalleryScreen = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | undefined>();
   const [previewUri, setPreviewUri] = useState<string | null>(null);
+  // Missing bridge is not a load failure: it gets its own unavailable state
+  // with no retry action that cannot succeed (audit finding B-11).
+  const [unavailable, setUnavailable] = useState(false);
 
   const moduleAvailable = getMediaButtonModule()?.listMedia != null;
 
@@ -48,11 +51,13 @@ const GalleryScreen = () => {
   const load = useCallback(async (isRefresh = false) => {
     const listMedia = getMediaButtonModule()?.listMedia;
     if (!listMedia) {
-      setError('Native media module unavailable');
+      setUnavailable(true);
+      setError(undefined);
       setLoading(false);
       setRefreshing(false);
       return;
     }
+    setUnavailable(false);
     if (isRefresh) {
       setRefreshing(true);
     }
@@ -92,18 +97,17 @@ const GalleryScreen = () => {
               : 'Your captures'
           }
         />
-        {!moduleAvailable ? (
-          <View style={{ marginBottom: spacing.md }}>
-            <NoticeCard
-              tone="brand"
-              title="Media listing lives in the native module"
-              message="Captured photos and videos appear here once the media bridge lands."
-            />
-          </View>
-        ) : null}
       </View>
 
-      {error ? (
+      {unavailable ? (
+        <View style={{ paddingHorizontal: spacing.screen }}>
+          <NoticeCard
+            tone="brand"
+            title="Media listing lives in the native module"
+            message="Captured photos and videos appear here once the media bridge lands."
+          />
+        </View>
+      ) : error ? (
         <ErrorView message={error} onRetry={() => load()} />
       ) : media.length === 0 ? (
         <EmptyState

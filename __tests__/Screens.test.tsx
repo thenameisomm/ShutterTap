@@ -103,10 +103,12 @@ describe('screens without native bridges', () => {
     expect(texts).toMatch('VIDEO');
   });
 
-  test('Gallery shows unavailable error state, no fake media', async () => {
+  test('Gallery shows one unavailable state, no fake media and no dead retry', async () => {
     const texts = textsOf(await renderScreen('Gallery', GalleryScreen));
     expect(texts).toMatch('Gallery');
-    expect(texts).toMatch('Native media module unavailable');
+    expect(texts).toMatch('Media listing lives in the native module');
+    expect(texts).not.toMatch('Native media module unavailable');
+    expect(texts).not.toMatch('Try again');
   });
 
   test('Media shows empty event feed', async () => {
